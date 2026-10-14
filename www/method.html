@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>วิธีการศึกษา - ระบบคาดการณ์การใช้ประโยชน์ที่ดิน</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1050;
+        }
+
+        .content-container {
+            flex-grow: 1;
+            max-width: 980px;
+            margin: 40px auto;
+            padding: 40px;
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+        }
+
+        h2 {
+            color: #2ca25f;
+            font-weight: 700;
+        }
+
+        h4 {
+            color: #333;
+            border-bottom: 2px solid #2ca25f;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        p,
+        li {
+            font-size: 17px;
+            line-height: 1.8;
+            color: #444;
+        }
+
+        .flowchart-box {
+            background: #fdfdfd;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            margin: 25px 0 35px 0;
+        }
+
+        .flowchart-box img {
+            max-width: 100%;
+            height: auto;
+            max-height: 850px;
+            border-radius: 8px;
+        }
+
+        .step-card {
+            background: #f8f9fa;
+            border-left: 5px solid #2ca25f;
+            border-radius: 8px;
+            padding: 18px 22px;
+            margin-bottom: 16px;
+        }
+
+        .step-card h5 {
+            color: #1b7837;
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        code {
+            background-color: #e9f5ee;
+            color: #1b7837;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ================= NAVBAR ================= -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="index.html">GeoPrediction</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">แผนที่คาดการณ์</a></li>
+                    <li class="nav-item"><a class="nav-link" href="background.html">ที่มาและความสำคัญ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="area.html">ขอบเขตพื้นที่</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="method.html">วิธีการศึกษา</a></li>
+                    <li class="nav-item"><a class="nav-link" href="conclusion.html">สรุปผล</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ================= CONTENT ================= -->
+    <div class="content-container">
+        <h2 class="mb-2 text-center">วิธีการศึกษาและขั้นตอนการดำเนินงาน</h2>
+        <p class="text-center text-muted mb-4">
+            กระบวนการจัดเตรียมข้อมูลเชิงพื้นที่และแบบจำลองการคาดการณ์การใช้ประโยชน์ที่ดิน (MOLUSCE)
+        </p>
+
+        <h4>1. แผนผังกระบวนการดำเนินงาน (Workflow Diagram)</h4>
+        <div class="flowchart-box">
+            <img src="Flowchart.png" alt="Flowchart วิธีการศึกษา">
+            <div class="text-muted small mt-3">
+                ภาพที่ 1:
+                แผนผังขั้นตอนการวิเคราะห์และคาดการณ์การเปลี่ยนแปลงการใช้ประโยชน์ที่ดินในเขตอุทยานแห่งชาติทับลาน
+            </div>
+        </div>
+
+        <h4>2. รายละเอียดขั้นตอนการวิเคราะห์ข้อมูลตามแผนผัง</h4>
+
+        <div class="step-card">
+            <h5>ขั้นที่ 1: การเตรียมข้อมูลการใช้ประโยชน์ที่ดินตั้งต้น (Land Use Data Preparation)</h5>
+            <ul class="mb-0">
+                <li>นำเข้าข้อมูลการใช้ประโยชน์ที่ดิน (Land Use) ช่วงปี ค.ศ. 2015 และ 2023 ของทั้ง 3 อำเภอ ได้แก่
+                    <code>LU_อ.วังน้ำเขียว 15/23</code>, <code>LU_อ.ครบุรี 15/23</code> และ
+                    <code>LU_อ.เสิงสาง 15/23</code></li>
+                <li>นำชั้นข้อมูลทั้ง 3 อำเภอมาผสานรวมกันด้วยคำสั่ง <b>Merge</b> เพื่อให้ได้ชั้นข้อมูลรวมของพื้นที่ศึกษา
+                    <code>LU_รวมอช.ทับลาน 15/23</code></li>
+                <li>แปลงข้อมูลเวกเตอร์ให้เป็นข้อมูลแรสเตอร์ด้วยเครื่องมือ <b>Rasterize</b>
+                    ได้ผลลัพธ์เป็นชั้นข้อมูลแรสเตอร์ <code>LU_รวมอช.ทับลาน 15/23</code>
+                    สำหรับใช้เป็นข้อมูลตั้งต้นในแบบจำลอง</li>
+            </ul>
+        </div>
+
+        <div class="step-card">
+            <h5>ขั้นที่ 2: การสกัดและวิเคราะห์ปัจจัยด้านระยะห่าง (Proximity Factors)</h5>
+            <ul class="mb-0">
+                <li>นำข้อมูล <code>LU_รวมอช.ทับลาน 15/23</code> มาตัดสกัดแยกประเภทด้วยคำสั่ง <b>Clip</b>
+                    เพื่อแยกชั้นข้อมูลพื้นที่ชุมชน (<code>Urban_area</code>) และพื้นที่เกษตรกรรม
+                    (<code>Agri_Area</code>)</li>
+                <li>รวบรวมชั้นข้อมูลปัจจัยโครงสร้างพื้นฐานและแหล่งน้ำเพิ่มเติม ได้แก่ ข้อมูลแหล่งน้ำผิวดิน
+                    (<code>Water_Surf</code>) และโครงข่ายถนน (<code>Road</code>)</li>
+                <li>นำปัจจัยทั้ง 4 ชั้นข้อมูลมาแปลงเป็นแรสเตอร์ (<b>Rasterize</b>)
+                    และคำนวณหาระยะห่างเชิงยุคลิดด้วยเครื่องมือ <b>Proximity (Raster Distance)</b>
+                    ได้ผลลัพธ์เป็นปัจจัยระยะห่าง 4 ตัวแปร ได้แก่:
+                    <ul>
+                        <li><code>Dis_Urban</code> (ระยะห่างจากพื้นที่ชุมชนและสิ่งปลูกสร้าง)</li>
+                        <li><code>Dis_Agri</code> (ระยะห่างจากพื้นที่เกษตรกรรม)</li>
+                        <li><code>Dis_Water</code> (ระยะห่างจากแหล่งน้ำ)</li>
+                        <li><code>Dis_Road</code> (ระยะห่างจากโครงข่ายถนน)</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="step-card">
+            <h5>ขั้นที่ 3: การวิเคราะห์ปัจจัยด้านกายภาพและความลาดชัน (Topographic & Slope Factor)</h5>
+            <ul class="mb-0">
+                <li>นำเข้าข้อมูลเส้นชั้นความสูงความละเอียด 1 เมตร (<code>Contour 1 m</code>) ของพื้นที่ศึกษา</li>
+                <li>ประมาณค่าเชิงพื้นที่เพื่อสร้างแบบจำลองความสูงเชิงเลขด้วยวิธี <b>TIN Interpolation</b></li>
+                <li>นำข้อมูลความสูงที่ได้มาคำนวณหาความลาดชันด้วยเครื่องมือ <b>Slope</b>
+                    ได้ผลลัพธ์เป็นชั้นข้อมูลแรสเตอร์ความลาดชัน (<code>Slope_DEM</code>)</li>
+            </ul>
+        </div>
+
+        <div class="step-card">
+            <h5>ขั้นที่ 4: การจำลองและคาดการณ์การใช้ประโยชน์ที่ดิน (MOLUSCE & Classification)</h5>
+            <ul class="mb-0">
+                <li>นำข้อมูลตั้งต้น <code>LU_รวมอช.ทับลาน 15/23</code> ร่วมกับตัวแปรขับเคลื่อนเชิงพื้นที่ทั้ง 5 ปัจจัย
+                    (<code>Dis_Urban</code>, <code>Dis_Agri</code>, <code>Dis_Water</code>, <code>Dis_Road</code> และ
+                    <code>Slope_DEM</code>) เข้าสู่ปลั๊กอิน <b>MOLUSCE</b> (Modules for Land Use Change Simulations)
+                    ในโปรแกรม QGIS</li>
+                <li>ประมวลผลเมทริกซ์การเปลี่ยนแปลงและจำลองการคาดการณ์ล่วงหน้า
+                    ได้ผลลัพธ์เป็นแผนที่คาดการณ์การใช้ประโยชน์ที่ดินตามช่วงปี (<b>Prediction Map</b>)</li>
+                <li>นำแผนที่คาดการณ์ที่ได้มาสรุปค่าพิกเซลรายคลาสด้วยเครื่องมือ <b>Raster Layer Unique Values</b>
+                    เพื่อจัดทำตารางสรุปสถิติพื้นที่แต่ละประเภท (<b>Classify Table</b>) สำหรับนำเสนอผลบนระบบ Web GIS</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

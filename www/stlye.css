@@ -1,0 +1,8 @@
+.map {
+    width: 100%;
+    height: 640px;
+}
+
+.vil-cor {
+    filter: hue-rotate(180deg) invert(0.2);
+}

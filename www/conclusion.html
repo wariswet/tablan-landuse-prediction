@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สรุปผลการศึกษา - ระบบคาดการณ์การใช้ประโยชน์ที่ดิน</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1050;
+        }
+
+        .content-container {
+            flex-grow: 1;
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 40px;
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+        }
+
+        h2 {
+            color: #2ca25f;
+            font-weight: 700;
+        }
+
+        h4 {
+            color: #333;
+            border-bottom: 2px solid #2ca25f;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        /* ปุ่มเลือกโหมดกราฟ (Tabs) */
+        .chart-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-tab-btn {
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 8px 16px;
+            font-size: 15px;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .chart-tab-btn.active {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        #chart {
+            width: 100%;
+            height: 480px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            border-left: 5px solid #2ca25f;
+            padding: 12px 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card .title {
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .stat-card .value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #222;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ================= NAVBAR ================= -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="index.html">GeoPrediction</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">แผนที่คาดการณ์</a></li>
+                    <li class="nav-item"><a class="nav-link" href="background.html">ที่มาและความสำคัญ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="area.html">ขอบเขตพื้นที่</a></li>
+                    <li class="nav-item"><a class="nav-link" href="method.html">วิธีการศึกษา</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="conclusion.html">สรุปผล</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ================= CONTENT ================= -->
+    <div class="content-container">
+        <h2 class="mb-2 text-center">สรุปผลการวิเคราะห์และคาดการณ์การใช้ประโยชน์ที่ดิน</h2>
+        <p class="text-center text-muted mb-4">
+            แผนภูมิแท่งเปรียบเทียบพื้นที่และเส้นแนวโน้มการเปลี่ยนแปลง (ค.ศ. 2015 - 2199)
+            แยกตามประเภทการใช้ประโยชน์ที่ดิน
+        </p>
+
+        <!-- ปุ่มกดสลับดูกราฟ: หน้ารวมทุก Landuse และแยกแต่ละ Landuse -->
+        <div class="chart-tabs" id="chartTabs">
+            <button class="btn btn-dark chart-tab-btn active" data-type="all">
+                📊 ภาพรวมทุกประเภท (All Land-Use)
+            </button>
+            <button class="btn btn-outline-danger chart-tab-btn" data-type="urban">
+                🟥 1. ชุมชน (Urban)
+            </button>
+            <button class="btn btn-outline-warning text-dark chart-tab-btn" data-type="agri">
+                🟨 2. เกษตรกรรม (Agri)
+            </button>
+            <button class="btn btn-outline-success chart-tab-btn" data-type="forest">
+                🟩 3. ป่าไม้ (Forest)
+            </button>
+            <button class="btn btn-outline-primary chart-tab-btn" data-type="water">
+                🟦 4. แหล่งน้ำ (Water)
+            </button>
+            <button class="btn btn-outline-secondary chart-tab-btn" style="border-color:#ff7f00; color:#d96b00;"
+                data-type="misc">
+                🟧 5. เบ็ดเตล็ด (Misc)
+            </button>
+        </div>
+
+        <!-- การ์ดสรุปค่าสถิติ (จะอัปเดตตามประเภทที่เลือก) -->
+        <div class="stat-summary-cards" id="statSummaryCards"></div>
+
+        <!-- กล่องแสดงกราฟ Highcharts -->
+        <div id="chart"></div>
+
+        <h4>ตารางสรุปพื้นที่การใช้ประโยชน์ที่ดินรายปี (หน่วย: ตารางกิโลเมตร และ ร้อยละ)</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover text-center align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ประเภทการใช้ที่ดิน</th>
+                        <th>2015</th>
+                        <th>2017</th>
+                        <th>2023</th>
+                        <th>2031</th>
+                        <th>2039</th>
+                        <th>2047</th>
+                        <th>2055</th>
+                        <th>2103</th>
+                        <th>2199</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="text-start fw-bold text-danger">1. ชุมชน (Urban)</td>
+                        <td>149.78<br><small class="text-muted">(3.86%)</small></td>
+                        <td>156.65<br><small class="text-muted">(4.04%)</small></td>
+                        <td>164.90<br><small class="text-muted">(4.25%)</small></td>
+                        <td>163.38<br><small class="text-muted">(4.21%)</small></td>
+                        <td>163.12<br><small class="text-muted">(4.20%)</small></td>
+                        <td>163.07<br><small class="text-muted">(4.20%)</small></td>
+                        <td>163.06<br><small class="text-muted">(4.20%)</small></td>
+                        <td>164.79<br><small class="text-muted">(4.25%)</small></td>
+                        <td>164.79<br><small class="text-muted">(4.25%)</small></td>
+                    </tr>
+                    <tr>
+                        <td class="text-start fw-bold text-warning">2. เกษตรกรรม (Agri)</td>
+                        <td>1,603.46<br><small class="text-muted">(41.31%)</small></td>
+                        <td>1,596.56<br><small class="text-muted">(41.13%)</small></td>
+                        <td>1,593.92<br><small class="text-muted">(41.06%)</small></td>
+                        <td>1,594.29<br><small class="text-muted">(41.07%)</small></td>
+                        <td>1,594.62<br><small class="text-muted">(41.08%)</small></td>
+                        <td>1,594.81<br><small class="text-muted">(41.09%)</small></td>
+                        <td>1,594.91<br><small class="text-muted">(41.09%)</small></td>
+                        <td>1,601.84<br><small class="text-muted">(41.27%)</small></td>
+                        <td>1,602.72<br><small class="text-muted">(41.29%)</small></td>
+                    </tr>
+                    <tr>
+                        <td class="text-start fw-bold text-success">3. ป่าไม้ (Forest)</td>
+                        <td>1,962.27<br><small class="text-muted">(50.55%)</small></td>
+                        <td>1,958.60<br><small class="text-muted">(50.46%)</small></td>
+                        <td>1,942.35<br><small class="text-muted">(50.04%)</small></td>
+                        <td>1,941.12<br><small class="text-muted">(50.01%)</small></td>
+                        <td>1,940.70<br><small class="text-muted">(50.00%)</small></td>
+                        <td>1,940.51<br><small class="text-muted">(49.99%)</small></td>
+                        <td>1,940.43<br><small class="text-muted">(49.99%)</small></td>
+                        <td>1,932.57<br><small class="text-muted">(49.79%)</small></td>
+                        <td>1,931.64<br><small class="text-muted">(49.77%)</small></td>
+                    </tr>
+                    <tr>
+                        <td class="text-start fw-bold text-primary">4. แหล่งน้ำ (Water)</td>
+                        <td>82.88<br><small class="text-muted">(2.14%)</small></td>
+                        <td>83.26<br><small class="text-muted">(2.15%)</small></td>
+                        <td>78.95<br><small class="text-muted">(2.03%)</small></td>
+                        <td>78.88<br><small class="text-muted">(2.03%)</small></td>
+                        <td>78.86<br><small class="text-muted">(2.03%)</small></td>
+                        <td>78.85<br><small class="text-muted">(2.03%)</small></td>
+                        <td>78.84<br><small class="text-muted">(2.03%)</small></td>
+                        <td>78.95<br><small class="text-muted">(2.03%)</small></td>
+                        <td>78.95<br><small class="text-muted">(2.03%)</small></td>
+                    </tr>
+                    <tr>
+                        <td class="text-start fw-bold" style="color:#ff7f00;">5. เบ็ดเตล็ด (Misc)</td>
+                        <td>83.09<br><small class="text-muted">(2.14%)</small></td>
+                        <td>86.23<br><small class="text-muted">(2.22%)</small></td>
+                        <td>99.75<br><small class="text-muted">(2.57%)</small></td>
+                        <td>102.20<br><small class="text-muted">(2.63%)</small></td>
+                        <td>102.56<br><small class="text-muted">(2.64%)</small></td>
+                        <td>102.62<br><small class="text-muted">(2.64%)</small></td>
+                        <td>102.62<br><small class="text-muted">(2.64%)</small></td>
+                        <td>101.72<br><small class="text-muted">(2.62%)</small></td>
+                        <td>101.75<br><small class="text-muted">(2.62%)</small></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h4>อภิปรายผลการศึกษา</h4>
+        <p style="font-size: 17px; line-height: 1.8;">
+            จากผลการคาดการณ์การเปลี่ยนแปลงการใช้ประโยชน์ที่ดินในพื้นที่ศึกษา (อำเภอครบุรี อำเภอเสิงสาง
+            และอำเภอวังน้ำเขียว) ระหว่างปี ค.ศ. 2015 ถึง ค.ศ. 2199 พบว่า <b>พื้นที่ป่าไม้ (Forest)</b>
+            มีแนวโน้มลดลงอย่างต่อเนื่องจาก 1,962.27 ตร.กม. (50.55%) ในปี 2015 เหลือ 1,931.64 ตร.กม. (49.77%) ในปี 2199
+            หรือลดลงรวมกว่า 30.63 ตร.กม. ในขณะที่ <b>พื้นที่ชุมชนและสิ่งปลูกสร้าง (Urban)</b> ขยายตัวเพิ่มขึ้นจาก 149.78
+            ตร.กม. (3.86%) เป็น 164.79 ตร.กม. (4.25%) และ <b>พื้นที่เบ็ดเตล็ด (Miscellaneous)</b> เพิ่มขึ้นจาก 83.09
+            ตร.กม. เป็น 101.75 ตร.กม.
+            สะท้อนให้เห็นถึงการรุกคืบของกิจกรรมมนุษย์บริเวณแนวเขตรอยต่ออุทยานแห่งชาติทับลานที่ต้องได้รับการเฝ้าระวังและวางแผนจัดการเชิงพื้นที่อย่างรัดกุม
+        </p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script>
+        const categories = [
+            '2015', '2017', '2023',
+            '2031 (คาดการณ์)', '2039 (คาดการณ์)', '2047 (คาดการณ์)',
+            '2055 (คาดการณ์)', '2103 (คาดการณ์)', '2199 (คาดการณ์)'
+        ];
+
+        // ข้อมูลจริงและสมการเส้นแนวโน้ม (Linear Regression Trendline) ของแต่ละประเภท
+        const landuseConfig = {
+            urban: {
+                name: '1. ชุมชนและสิ่งปลูกสร้าง (Urban)',
+                color: '#e41a1c',
+                trendColor: '#ff7b7d',
+                data: [149.78, 156.65, 164.90, 163.38, 163.12, 163.07, 163.06, 164.79, 164.79],
+                trend: [156.14, 157.48, 158.82, 160.16, 161.50, 162.85, 164.19, 165.53, 166.87],
+                mean: 161.50, median: 163.12, min: 149.78, max: 164.90, sd: 5.06,
+                change: '+15.01 ตร.กม. (+10.02%)'
+            },
+            agri: {
+                name: '2. เกษตรกรรม (Agri)',
+                color: '#d9a400',
+                trendColor: '#ffe066',
+                data: [1603.46, 1596.56, 1593.92, 1594.29, 1594.62, 1594.81, 1594.91, 1601.84, 1602.72],
+                trend: [1596.43, 1596.69, 1596.95, 1597.20, 1597.46, 1597.72, 1597.97, 1598.23, 1598.48],
+                mean: 1597.46, median: 1594.91, min: 1593.92, max: 1603.46, sd: 4.00,
+                change: '-0.74 ตร.กม. (-0.05%)'
+            },
+            forest: {
+                name: '3. ป่าไม้ (Forest)',
+                color: '#2ca25f',
+                trendColor: '#7be3a6',
+                data: [1962.27, 1958.60, 1942.35, 1941.12, 1940.70, 1940.51, 1940.43, 1932.57, 1931.64],
+                trend: [1957.03, 1953.61, 1950.19, 1946.77, 1943.35, 1939.94, 1936.52, 1933.10, 1929.68],
+                mean: 1943.35, median: 1940.70, min: 1931.64, max: 1962.27, sd: 10.45,
+                change: '-30.63 ตร.กม. (-1.56%)'
+            },
+            water: {
+                name: '4. แหล่งน้ำ (Water)',
+                color: '#3182bd',
+                trendColor: '#7ec4ff',
+                data: [82.88, 83.26, 78.95, 78.88, 78.86, 78.85, 78.84, 78.95, 78.95],
+                trend: [81.75, 81.27, 80.79, 80.31, 79.82, 79.34, 78.86, 78.38, 77.90],
+                mean: 79.82, median: 78.95, min: 78.84, max: 83.26, sd: 1.84,
+                change: '-3.93 ตร.กม. (-4.74%)'
+            },
+            misc: {
+                name: '5. เบ็ดเตล็ด (Miscellaneous)',
+                color: '#ff7f00',
+                trendColor: '#ffbe76',
+                data: [83.09, 86.23, 99.75, 102.20, 102.56, 102.62, 102.62, 101.72, 101.75],
+                trend: [89.58, 91.70, 93.82, 95.94, 98.06, 100.18, 102.30, 104.42, 106.54],
+                mean: 98.06, median: 101.75, min: 83.09, max: 102.62, sd: 7.69,
+                change: '+18.66 ตร.กม. (+22.46%)'
+            }
+        };
+
+        // ฟังก์ชันอัปเดตการ์ดสรุปตัวเลขด้านบนกราฟ
+        function updateSummaryCards(type) {
+            const container = document.getElementById('statSummaryCards');
+            if (type === 'all') {
+                container.innerHTML = `
+                    <div class="stat-card" style="border-left-color:#333;">
+                        <div class="title">พื้นที่ศึกษารวมทั้งหมด</div>
+                        <div class="value">~3,879.86 ตร.กม.</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color:#2ca25f;">
+                        <div class="title">สัดส่วนหลักอันดับ 1</div>
+                        <div class="value">ป่าไม้ (~50.0%)</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color:#d9a400;">
+                        <div class="title">สัดส่วนหลักอันดับ 2</div>
+                        <div class="value">เกษตรกรรม (~41.1%)</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color:#e41a1c;">
+                        <div class="title">การขยายตัวของชุมชน</div>
+                        <div class="value">+15.01 ตร.กม.</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color:#ff7f00;">
+                        <div class="title">การลดลงของป่าไม้</div>
+                        <div class="value">-30.63 ตร.กม.</div>
+                    </div>
+                `;
+            } else {
+                const item = landuseConfig[type];
+                container.innerHTML = `
+                    <div class="stat-card" style="border-left-color:${item.color};">
+                        <div class="title">ค่าเฉลี่ย (Mean)</div>
+                        <div class="value">${item.mean.toFixed(2)} ตร.กม.</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color:${item.color};">
+                        <div class="title">มัธยฐาน (Median)</div>
+                        <div class="value">${item.median.toFixed(2)} ตร.กม.</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color:${item.color};">
+                        <div class="title">ต่ำสุด - สูงสุด (Min - Max)</div>
+                        <div class="value">${item.min} - ${item.max}</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color:${item.color};">
+                        <div class="title">ส่วนเบี่ยงเบนมาตรฐาน (SD)</div>
+                        <div class="value">${item.sd.toFixed(2)} ตร.กม.</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color:${item.color};">
+                        <div class="title">การเปลี่ยนแปลง (2015 → 2199)</div>
+                        <div class="value">${item.change}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // ฟังก์ชันวาดกราฟแท่ง + เส้นแนวโน้มด้วย Highcharts
+        function renderChart(type) {
+            updateSummaryCards(type);
+
+            let chartTitle = '';
+            let seriesData = [];
+            let yAxisConfig = {
+                title: { text: 'พื้นที่ (ตารางกิโลเมตร)', style: { color: '#ddd' } },
+                labels: { style: { color: '#ccc' } },
+                gridLineColor: '#333'
+            };
+
+            if (type === 'all') {
+                chartTitle = 'แผนภูมิแท่งและเส้นแนวโน้มการใช้ประโยชน์ที่ดินรวมทุกประเภท (ค.ศ. 2015 - 2199)';
+                // สร้างแท่งกราฟ (Column) ของทั้ง 5 ประเภท
+                Object.keys(landuseConfig).forEach(key => {
+                    const cfg = landuseConfig[key];
+                    seriesData.push({
+                        type: 'column',
+                        name: cfg.name,
+                        color: cfg.color,
+                        data: cfg.data,
+                        borderColor: 'transparent'
+                    });
+                });
+                // สร้างเส้นแนวโน้ม (Spline) ทับลงบนแท่งกราฟของทั้ง 5 ประเภท
+                Object.keys(landuseConfig).forEach(key => {
+                    const cfg = landuseConfig[key];
+                    seriesData.push({
+                        type: 'spline',
+                        name: 'แนวโน้ม: ' + cfg.name,
+                        color: cfg.color,
+                        data: cfg.data,
+                        dashStyle: 'ShortDash',
+                        lineWidth: 2,
+                        marker: { enabled: true, radius: 4 },
+                        showInLegend: false
+                    });
+                });
+            } else {
+                const cfg = landuseConfig[type];
+                chartTitle = `แผนภูมิแท่งและเส้นแนวโน้ม: ${cfg.name} รายปี (ค.ศ. 2015 - 2199)`;
+
+                // ปรับสเกลแกน Y ให้ซูมเข้าหาช่วงข้อมูลของ Landuse นั้นๆ เพื่อเห็นความเปลี่ยนแปลงชัดเจน
+                const minVal = Math.min(...cfg.data);
+                const maxVal = Math.max(...cfg.data);
+                const padding = Math.max((maxVal - minVal) * 0.35, 1.5);
+                yAxisConfig.min = Math.floor((minVal - padding) * 10) / 10;
+                yAxisConfig.max = Math.ceil((maxVal + padding) * 10) / 10;
+
+                seriesData = [
+                    {
+                        type: 'column',
+                        name: `พื้นที่ ${cfg.name} (แท่งข้อมูลจริง/คาดการณ์)`,
+                        color: cfg.color,
+                        data: cfg.data,
+                        borderColor: '#ffffff',
+                        borderWidth: 1,
+                        dataLabels: {
+                            enabled: true,
+                            format: '{point.y:,.2f}',
+                            style: { color: '#ffffff', textOutline: '1px contrast', fontSize: '12px' }
+                        }
+                    },
+                    {
+                        type: 'spline',
+                        name: 'เส้นการเปลี่ยนแปลงรายปี (Curve)',
+                        color: '#ffffff',
+                        lineWidth: 2.5,
+                        data: cfg.data,
+                        marker: {
+                            lineWidth: 2,
+                            lineColor: '#ffffff',
+                            fillColor: cfg.color,
+                            radius: 5
+                        }
+                    },
+                    {
+                        type: 'line',
+                        name: 'เส้นแนวโน้มเชิงเส้น (Linear Trendline)',
+                        color: '#00e5ff',
+                        dashStyle: 'LongDash',
+                        lineWidth: 2.5,
+                        data: cfg.trend,
+                        marker: { enabled: false }
+                    }
+                ];
+            }
+
+            Highcharts.chart('chart', {
+                chart: {
+                    backgroundColor: '#181818',
+                    style: { fontFamily: 'Sarabun, sans-serif' }
+                },
+                title: {
+                    text: chartTitle,
+                    style: { color: '#ffffff', fontSize: '19px', fontWeight: 'bold' }
+                },
+                xAxis: {
+                    categories: categories,
+                    labels: { style: { color: '#dddddd', fontSize: '13px' } },
+                    lineColor: '#444'
+                },
+                yAxis: yAxisConfig,
+                tooltip: {
+                    shared: true,
+                    backgroundColor: 'rgba(20, 20, 20, 0.92)',
+                    style: { color: '#ffffff', fontSize: '13.5px' },
+                    valueSuffix: ' ตร.กม.'
+                },
+                legend: {
+                    itemStyle: { color: '#e0e0e0', fontSize: '13.5px' },
+                    itemHoverStyle: { color: '#ffffff' }
+                },
+                plotOptions: {
+                    column: {
+                        borderRadius: 4,
+                        pointPadding: 0.12,
+                        groupPadding: 0.12
+                    }
+                },
+                series: seriesData,
+                credits: { enabled: false }
+            });
+        }
+
+        // ผูก Event ปุ่มกดสลับแท็บกราฟ
+        document.querySelectorAll('#chartTabs button').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('#chartTabs button').forEach(b => b.classList.remove('active', 'btn-dark'));
+                this.classList.add('active');
+                renderChart(this.dataset.type);
+            });
+        });
+
+        // แสดงกราฟภาพรวมทุกประเภทเป็นค่าเริ่มต้นเมื่อเปิดหน้าเว็บ
+        renderChart('all');
+    </script>
+</body>
+
+</html>

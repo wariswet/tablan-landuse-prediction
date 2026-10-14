@@ -1,0 +1,27 @@
+GET http://localhost:3000/api/v1/hello
+
+###
+GET http://localhost:3000/api/v1/village/5
+
+###
+GET http://localhost:3000/api/v1/village_name/ดง
+
+###
+GET http://localhost:3000/api/v1/add_feature
+
+###
+POST http://localhost:3000/api/v1/add_poi
+Content-Type: application/json
+
+{
+  "text": "หอสมุด",
+  "lng": 15467545,
+  "lat": 5757575
+}
+
+
+###
+GET http://localhost:3000/api/v1/rainfall
+
+###
+GET http://localhost:3000/api/v1/rainfall/48300

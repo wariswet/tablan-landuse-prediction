@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ขอบเขตพื้นที่ศึกษา - ครบุรี, เสิงสาง, วังน้ำเขียว</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            font-family: 'Sarabun', sans-serif;
+        }
+
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1050;
+        }
+
+        #map {
+            flex-grow: 1;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .info-box {
+            padding: 12px 15px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            min-width: 220px;
+        }
+
+        .info-box h5 {
+            margin: 0 0 5px;
+            color: #2ca25f;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ================= NAVBAR ================= -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="index.html">GeoPrediction</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">แผนที่คาดการณ์</a></li>
+                    <li class="nav-item"><a class="nav-link" href="background.html">ที่มาและความสำคัญ</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="area.html">ขอบเขตพื้นที่</a></li>
+                    <li class="nav-item"><a class="nav-link" href="method.html">วิธีการศึกษา</a></li>
+                    <li class="nav-item"><a class="nav-link" href="conclusion.html">สรุปผล</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ================= MAP ================= -->
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const map = L.map('map').setView([14.2860, 102.1930], 10);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri'
+        }).addTo(map);
+
+        const info = L.control({ position: 'topright' });
+        info.onAdd = function (map) {
+            this._div = L.DomUtil.create('div', 'info-box');
+            this.update();
+            return this._div;
+        };
+
+        let districtTotalAreas = {};
+
+        info.update = function (props) {
+            let areaVal = 0;
+            if (props && props.custom_district) {
+                areaVal = districtTotalAreas[props.custom_district] || 0;
+            }
+
+            this._div.innerHTML = '<h5>ข้อมูลพื้นที่</h5>' + (props ?
+                '<b>อำเภอ: ' + (props.custom_district || 'ไม่ระบุ') + '</b><br />' +
+                'อุทยาน: อุทยานแห่งชาติทับลาน<br />' +
+                'พื้นที่รวม ' + areaVal.toFixed(2) + ' ตร.กม.'
+                : 'นำเมาส์ไปชี้ที่พื้นที่เพื่อดูข้อมูล');
+        };
+        info.addTo(map);
+
+        const districtColors = {
+            'ครบุรี': '#3182bd',
+            'เสิงสาง': '#31a354',
+            'วังน้ำเขียว': '#756bb1'
+        };
+
+        function style(feature) {
+            const distName = feature.properties.custom_district;
+            return {
+                fillColor: districtColors[distName] || '#3182bd',
+                weight: 2,
+                opacity: 1,
+                color: 'white',
+                dashArray: '3',
+                fillOpacity: 0.55
+            };
+        }
+
+        let geojsonLayer;
+        function highlightFeature(e) {
+            const layer = e.target;
+            layer.setStyle({ weight: 4, color: '#e6550d', dashArray: '', fillOpacity: 0.8 });
+            layer.bringToFront();
+            info.update(layer.feature.properties);
+        }
+
+        function resetHighlight(e) {
+            geojsonLayer.resetStyle(e.target);
+            info.update();
+        }
+
+        function zoomToFeature(e) {
+            map.fitBounds(e.target.getBounds());
+        }
+
+        function onEachFeature(feature, layer) {
+            layer.on({ mouseover: highlightFeature, mouseout: resetHighlight, click: zoomToFeature });
+            const name = feature.properties.custom_district || 'พื้นที่ศึกษา';
+            layer.bindTooltip('อำเภอ' + name, { sticky: true, className: 'fw-bold' });
+        }
+
+        const files = [
+            { url: 'https://urbioihiapdgckfetbfe.supabase.co/storage/v1/object/public/tablan/Kornburi_JSON.geojson', name: 'ครบุรี' },
+            { url: 'https://urbioihiapdgckfetbfe.supabase.co/storage/v1/object/public/tablan/SuengSang_JSON.geojson', name: 'เสิงสาง' },
+            { url: 'https://urbioihiapdgckfetbfe.supabase.co/storage/v1/object/public/tablan/Wangnam_JSON.geojson', name: 'วังน้ำเขียว' }
+        ];
+
+        Promise.all(files.map(item =>
+            fetch(item.url)
+                .then(res => {
+                    if (!res.ok) throw new Error(`ไม่พบไฟล์ ${item.url}`);
+                    return res.json();
+                })
+                .then(data => {
+                    let totalAreaForThisDistrict = 0;
+                    if (data.features) {
+                        data.features.forEach(f => {
+                            f.properties.custom_district = item.name;
+                            let val = parseFloat(f.properties.KM2 || f.properties.Shape_Area || 0);
+                            totalAreaForThisDistrict += val;
+                        });
+                    }
+                    districtTotalAreas[item.name] = totalAreaForThisDistrict;
+                    return data;
+                })
+        ))
+            .then(results => {
+                let combinedFeatures = [];
+                results.forEach(data => {
+                    if (data.features) {
+                        combinedFeatures = combinedFeatures.concat(data.features);
+                    }
+                });
+
+                const combinedGeoJson = {
+                    type: "FeatureCollection",
+                    features: combinedFeatures
+                };
+
+                geojsonLayer = L.geoJson(combinedGeoJson, { style: style, onEachFeature: onEachFeature }).addTo(map);
+                map.fitBounds(geojsonLayer.getBounds());
+            })
+            .catch(err => {
+                console.error('Error loading GeoJSONs:', err);
+            });
+    </script>
+</body>
+
+</html>
