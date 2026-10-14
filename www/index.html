@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบคาดการณ์การใช้ประโยชน์ที่ดิน - อุทยานแห่งชาติทับลาน</title>
+    <title>DooTanLab</title>
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -42,11 +42,13 @@
             background: rgba(255, 255, 255, 0.96);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             border-radius: 10px;
-            min-width: 265px;
+            min-width: 280px;
+            max-height: 85vh;
+            overflow-y: auto;
         }
 
         .info-box h5 {
-            margin: 0 0 6px;
+            margin: 0;
             color: #2ca25f;
             font-weight: 700;
             font-size: 16.5px;
@@ -60,7 +62,7 @@
 
         .layer-toggle-section .form-check {
             margin-bottom: 4px;
-            font-size: 14px;
+            font-size: 13.5px;
         }
 
         .layer-toggle-section .form-check-input {
@@ -86,7 +88,7 @@
         }
 
         .left-pie-panel h5 {
-            margin: 0 0 4px;
+            margin: 0;
             color: #2ca25f;
             font-weight: 700;
             font-size: 18px;
@@ -176,7 +178,7 @@
     <!-- ================= NAVBAR ================= -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="index.html">GeoPrediction</a>
+            <a class="navbar-brand fw-bold" href="index.html">Tanlab 888</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -186,6 +188,7 @@
                     <li class="nav-item"><a class="nav-link" href="background.html">ที่มาและความสำคัญ</a></li>
                     <li class="nav-item"><a class="nav-link" href="area.html">ขอบเขตพื้นที่</a></li>
                     <li class="nav-item"><a class="nav-link" href="method.html">วิธีการศึกษา</a></li>
+                    <li class="nav-item"><a class="nav-link" href="gallery.html">แกลเลอรีแผนที่</a></li>
                     <li class="nav-item"><a class="nav-link" href="conclusion.html">สรุปผล</a></li>
                 </ul>
             </div>
@@ -194,22 +197,29 @@
 
     <!-- ================= MAP CONTAINER ================= -->
     <div id="map">
-        <!-- กล่อง Pie Chart ด้านซ้าย -->
+        <!-- กล่อง Pie Chart ด้านซ้าย พร้อมปุ่มย่อ/ขยาย -->
         <div class="left-pie-panel" id="leftPanel">
-            <h5>สัดส่วนการใช้ประโยชน์ที่ดิน</h5>
-            <div id="currentYearTitle" class="fw-bold text-dark mb-1" style="font-size: 14.5px;">
-                สถิติพื้นที่: พ.ศ. 2574 (ค.ศ. 2031)
-            </div>
-            <div id="loadingStatus" class="small mb-1"></div>
-
-            <!-- กราฟวงกลม Pie Chart -->
-            <div class="chart-wrapper">
-                <canvas id="landusePieChart"></canvas>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <h5>สัดส่วนการใช้ประโยชน์ที่ดิน</h5>
+                <button class="btn btn-sm btn-outline-success py-0 px-2 fw-bold" id="toggleLeftBtn"
+                    onclick="toggleLeftPanel()">➖ ย่อ</button>
             </div>
 
-            <hr class="my-2">
-            <!-- ตารางตัวเลขสรุปด้านล่างกราฟ -->
-            <div id="statsContent"></div>
+            <div id="leftPanelContent">
+                <div id="currentYearTitle" class="fw-bold text-dark mb-1" style="font-size: 14.5px;">
+                    สถิติพื้นที่: พ.ศ. 2574 (ค.ศ. 2031)
+                </div>
+                <div id="loadingStatus" class="small mb-1"></div>
+
+                <!-- กราฟวงกลม Pie Chart -->
+                <div class="chart-wrapper">
+                    <canvas id="landusePieChart"></canvas>
+                </div>
+
+                <hr class="my-2">
+                <!-- ตารางตัวเลขสรุปด้านล่างกราฟ -->
+                <div id="statsContent"></div>
+            </div>
         </div>
 
         <!-- แถบปุ่มเล่น/หยุด ด้านล่าง -->
@@ -238,10 +248,12 @@
         </div>
     </div>
 
-    <!-- Libraries: Leaflet, Bootstrap, Chart.js, Georaster -->
+    <!-- Libraries: Leaflet, Bootstrap, Chart.js, Proj4, Georaster -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+    <script src="https://unpkg.com/proj4leaflet@1.0.2/src/proj4leaflet.js"></script>
     <script src="https://unpkg.com/georaster"></script>
     <script src="https://unpkg.com/georaster-layer-for-leaflet/dist/georaster-layer-for-leaflet.min.js"></script>
 
@@ -252,20 +264,34 @@
         L.DomEvent.disableClickPropagation(document.getElementById('bottomBar'));
         L.DomEvent.disableScrollPropagation(document.getElementById('bottomBar'));
 
+        // ฟังก์ชันย่อ/ขยายกล่องซ้าย
+        let isLeftCollapsed = false;
+        function toggleLeftPanel() {
+            isLeftCollapsed = !isLeftCollapsed;
+            const content = document.getElementById('leftPanelContent');
+            const btn = document.getElementById('toggleLeftBtn');
+            if (isLeftCollapsed) {
+                content.style.display = 'none';
+                btn.innerHTML = '➕ ขยาย';
+            } else {
+                content.style.display = 'block';
+                btn.innerHTML = '➖ ย่อ';
+            }
+        }
+
         // 1. สร้างแผนที่ตั้งต้น
         const map = L.map('map', { zoomControl: false }).setView([14.2860, 102.1930], 10);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // สร้าง Pane พิเศษสำหรับเก็บเลเยอร์ภาพ TIFF โดยเฉพาะ เพื่อให้สั่งตัดขอบเขต (Clip) ด้วย SVG ได้ 100%
         const tiffPane = map.createPane('tiffPane');
-        tiffPane.style.zIndex = 350; // อยู่เหนือแผนที่ดาวเทียม แต่อยู่ใต้เส้นขอบเขต Shapefile (zIndex 400)
+        tiffPane.style.zIndex = 350;
 
-        // 2. แผนที่ฐาน (Esri World Imagery)
+        const tiffLayerGroup = L.layerGroup().addTo(map);
+
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: 'Tiles &copy; Esri'
         }).addTo(map);
 
-        // 3. ข้อมูลสถิติและไฟล์ TIFF ทั้ง 9 ช่วงปีตามไฟล์ stats.xlsx
         const yearsList = ["2015", "2017", "2023", "2031", "2039", "2047", "2055", "2103", "2199"];
         const statsData = {
             "2015": { file: "merge58_ras.tif", label: "พ.ศ. 2558 (ค.ศ. 2015)", urban: [149.78, 3.86], agri: [1603.46, 41.31], forest: [1962.27, 50.55], water: [82.88, 2.14], misc: [83.09, 2.14] },
@@ -279,7 +305,6 @@
             "2199": { file: "2200test.tif", label: "พ.ศ. 2742 (ค.ศ. 2199)", urban: [164.79, 4.25], agri: [1602.72, 41.29], forest: [1931.64, 49.77], water: [78.95, 2.03], misc: [101.75, 2.62] }
         };
 
-        // 4. สร้าง Pie Chart ด้านซ้ายด้วย Chart.js
         const ctx = document.getElementById('landusePieChart').getContext('2d');
         const pieChart = new Chart(ctx, {
             type: 'pie',
@@ -333,13 +358,11 @@
             });
         }
 
-        // 5. ระบบตัดภาพ (Clip Landuse) ด้วย SVG ClipPath ตามขอบเขตอุทยาน/อำเภอ (ไม่ต้องใส่ไฟล์เพิ่ม!)
         let districtTotalAreas = {};
         let districtLayers = {};
         let districtGeoJsonData = {};
         let isClipByPark = false;
 
-        // สร้าง SVG สำหรับทำหน้ากากตัดภาพ (Clip Mask) ใน overlayPane ของ Leaflet
         const svgNS = "http://www.w3.org/2000/svg";
         const clipSvg = document.createElementNS(svgNS, "svg");
         clipSvg.style.position = "absolute";
@@ -359,7 +382,6 @@
         clipSvg.appendChild(clipDefs);
         map.getPanes().overlayPane.appendChild(clipSvg);
 
-        // ฟังก์ชันแปลงพิกัด Lat/Lng ของ GeoJSON (รองรับทั้ง Polygon และ MultiPolygon) เป็น SVG Path
         function ringToSvgPath(ring) {
             let d = "";
             for (let i = 0; i < ring.length; i++) {
@@ -380,7 +402,6 @@
                 .filter(chk => chk.checked)
                 .map(chk => chk.value);
 
-            // ถ้าติ๊กเลือกอำเภอไว้ ให้ตัดตามอำเภอที่ติ๊ก แต่ถ้าปิดเส้นขอบเขตทั้งหมด ให้ตัดตามขอบเขตทั้ง 3 อำเภอรวมกัน
             const targetDistricts = checkedDistricts.length > 0 ? checkedDistricts : Object.keys(districtGeoJsonData);
 
             let pathStr = "";
@@ -408,26 +429,30 @@
             tiffPane.style.webkitClipPath = "url(#parkBoundaryClip)";
         }
 
-        // อัปเดตตำแหน่งหน้ากากตัดภาพทุกครั้งที่ซูมหรือเลื่อนแผนที่
         map.on('move zoom viewreset moveend zoomend', updateSvgClipPath);
 
-        // 6. ระบบโหลดและแสดงผลไฟล์ TIFF
         let currentTiffLayer = null;
+        let currentLoadingYear = null;
         let isTiffVisible = true;
         const georasterCache = {};
 
-        function displayGeoraster(georaster, fileName) {
+        function displayGeoraster(georaster, fileName, year) {
+            tiffLayerGroup.clearLayers();
             if (currentTiffLayer) {
                 map.removeLayer(currentTiffLayer);
+                currentTiffLayer = null;
             }
 
             currentTiffLayer = new GeoRasterLayer({
                 georaster: georaster,
-                pane: 'tiffPane', // วาดลงใน tiffPane เพื่อให้ถูกตัดขอบเขตด้วย SVG ClipPath
+                pane: 'tiffPane',
                 opacity: 0.85,
-                resolution: 256,
+                resolution: 128,
                 pixelValuesToColorFn: values => {
-                    const val = values[0];
+                    const rawVal = values[0];
+                    if (rawVal === null || rawVal === undefined || isNaN(rawVal)) return null;
+
+                    const val = Math.round(rawVal);
                     if (val === 1) return '#e41a1c'; // 1. ชุมชน
                     if (val === 2) return '#ffff33'; // 2. เกษตรกรรม
                     if (val === 3) return '#2ca25f'; // 3. ป่าไม้
@@ -438,13 +463,16 @@
             });
 
             if (isTiffVisible) {
-                currentTiffLayer.addTo(map);
+                tiffLayerGroup.addLayer(currentTiffLayer);
             }
 
             updateSvgClipPath();
 
-            const clipBadge = isClipByPark ? ' <span class="badge bg-info text-dark">Clip เขตอุทยาน</span>' : '';
-            document.getElementById('loadingStatus').innerHTML = `<span class="text-success">✅ แสดงผล <b>${fileName}</b>${clipBadge}</span>`;
+            const projText = georaster.projection ? `EPSG:${georaster.projection}` : 'ไม่ระบุพิกัด';
+            const clipBadge = isClipByPark ? ' <span class="badge bg-info text-dark">Clip</span>' : '';
+            document.getElementById('loadingStatus').innerHTML = `
+                <span class="text-success">✅ <b>${fileName}</b> (${projText})${clipBadge}</span>
+            `;
         }
 
         function loadYearData(index) {
@@ -452,16 +480,20 @@
             const fileName = statsData[year].file;
             const statusEl = document.getElementById('loadingStatus');
 
+            currentLoadingYear = year;
             updateLeftPanel(year);
 
+            const radioEl = document.getElementById(`tiffYear_${year}`);
+            if (radioEl) radioEl.checked = true;
+
             if (georasterCache[year]) {
-                displayGeoraster(georasterCache[year], fileName);
+                displayGeoraster(georasterCache[year], fileName, year);
                 return;
             }
 
             statusEl.innerHTML = `<span class="text-primary">⏳ กำลังโหลดไฟล์ <b>${fileName}</b>...</span>`;
 
-            fetch(fileName)
+            fetch(fileName, { cache: "no-store" })
                 .then(res => {
                     if (!res.ok) throw new Error(`ไม่พบไฟล์ ${fileName}`);
                     return res.arrayBuffer();
@@ -469,15 +501,16 @@
                 .then(arrayBuffer => parseGeoraster(arrayBuffer))
                 .then(georaster => {
                     georasterCache[year] = georaster;
-                    displayGeoraster(georaster, fileName);
+                    if (currentLoadingYear === year) {
+                        displayGeoraster(georaster, fileName, year);
+                    }
                 })
                 .catch(err => {
                     console.warn(err);
-                    statusEl.innerHTML = `<span class="text-danger">⚠️ ไม่พบไฟล์ <b>${fileName}</b> ในโฟลเดอร์ www</span>`;
+                    statusEl.innerHTML = `<span class="text-danger">⚠️ โหลดไม่ได้: <b>${fileName}</b></span>`;
                 });
         }
 
-        // 7. ระบบปุ่มเล่น / หยุด (Play / Pause) และแถบเลื่อนเวลาด้านล่าง
         let currentIndex = 3;
         let isPlaying = false;
         let playInterval = null;
@@ -519,55 +552,91 @@
             });
         });
 
-        // 8. กล่องแสดงข้อมูลพื้นที่ + สวิตช์เปิด-ปิด Shapefile และ Clip Landuse มุมขวาบน
+        // 8. กล่องแสดงข้อมูลพื้นที่ + สวิตช์เปิด-ปิด และปุ่มย่อ/ขยาย ขวาบน
         const info = L.control({ position: 'topright' });
 
         info.onAdd = function (map) {
             this._div = L.DomUtil.create('div', 'info-box');
             L.DomEvent.disableClickPropagation(this._div);
+            L.DomEvent.disableScrollPropagation(this._div);
 
             this._div.innerHTML = `
-                <h5>ข้อมูลพื้นที่</h5>
-                <div id="hoverDistrictInfo">นำเมาส์ไปชี้ที่พื้นที่ศึกษา</div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5>ข้อมูลพื้นที่</h5>
+                    <button class="btn btn-sm btn-outline-success py-0 px-2 fw-bold" id="toggleRightBtn" onclick="toggleRightPanel()">➖ ย่อ</button>
+                </div>
 
-                <div class="layer-toggle-section">
-                    <div class="fw-bold mb-1" style="color:#2ca25f; font-size:14.5px;">จัดการชั้นข้อมูล (Layers)</div>
+                <div id="rightPanelContent" class="mt-2">
+                    <div id="hoverDistrictInfo">ลองชี้ที่พื้นที่ศึกษา</div>
 
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="toggleAllShp" checked>
-                        <label class="form-check-label fw-bold" for="toggleAllShp">แสดงเส้นขอบเขต (Shapefile)</label>
-                    </div>
+                    <div class="layer-toggle-section">
+                        <div class="fw-bold mb-1" style="color:#2ca25f; font-size:14.5px;">จัดการชั้นข้อมูล (Layers)</div>
 
-                    <div class="ps-3 mt-1" id="subDistrictToggles">
-                        <div class="form-check">
-                            <input class="form-check-input dist-chk" type="checkbox" value="ครบุรี" id="chkKornburi" checked>
-                            <label class="form-check-label" for="chkKornburi">อำเภอครบุรี</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="toggleAllShp" checked>
+                            <label class="form-check-label fw-bold" for="toggleAllShp">แสดงเส้นขอบเขต (Shapefile)</label>
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input dist-chk" type="checkbox" value="เสิงสาง" id="chkSuengSang" checked>
-                            <label class="form-check-label" for="chkSuengSang">อำเภอเสิงสาง</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input dist-chk" type="checkbox" value="วังน้ำเขียว" id="chkWangnam" checked>
-                            <label class="form-check-label" for="chkWangnam">อำเภอวังน้ำเขียว</label>
-                        </div>
-                    </div>
 
-                    <div class="form-check form-switch mt-2 pt-2 border-top">
-                        <input class="form-check-input" type="checkbox" id="toggleTiffLayer" checked>
-                        <label class="form-check-label fw-bold" for="toggleTiffLayer">แสดงแผนที่คาดการณ์ (TIFF)</label>
-                    </div>
+                        <div class="ps-3 mt-1" id="subDistrictToggles">
+                            <div class="form-check">
+                                <input class="form-check-input dist-chk" type="checkbox" value="ครบุรี" id="chkKornburi" checked>
+                                <label class="form-check-label" for="chkKornburi">อำเภอครบุรี</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input dist-chk" type="checkbox" value="เสิงสาง" id="chkSuengSang" checked>
+                                <label class="form-check-label" for="chkSuengSang">อำเภอเสิงสาง</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input dist-chk" type="checkbox" value="วังน้ำเขียว" id="chkWangnam" checked>
+                                <label class="form-check-label" for="chkWangnam">อำเภอวังน้ำเขียว</label>
+                            </div>
+                        </div>
 
-                    <div class="form-check form-switch mt-1">
-                        <input class="form-check-input" type="checkbox" id="toggleClipLanduse">
-                        <label class="form-check-label fw-bold text-primary" for="toggleClipLanduse">
-                            ✂️ ตัดเฉพาะในเขตอุทยาน (Clip)
-                        </label>
+                        <div class="form-check form-switch mt-2 pt-2 border-top">
+                            <input class="form-check-input" type="checkbox" id="toggleTiffLayer" checked>
+                            <label class="form-check-label fw-bold" for="toggleTiffLayer">แสดงแผนที่คาดการณ์ (Molusce)</label>
+                        </div>
+
+                        <div class="form-check form-switch mt-1">
+                            <input class="form-check-input" type="checkbox" id="toggleClipLanduse">
+                            <label class="form-check-label fw-bold text-primary" for="toggleClipLanduse">
+                                ✂️ ตัดเฉพาะในเขตอุทยาน (Clip)
+                            </label>
+                        </div>
+
+                        <div class="mt-2 pt-2 border-top">
+                            <div class="fw-bold mb-1" style="color:#2ca25f; font-size:14px;">เลือกแสดงไฟล์ TIFF รายปี</div>
+                            <div id="tiffYearCheckboxes" class="ps-1" style="max-height: 165px; overflow-y: auto;">
+                                ${yearsList.map((y, idx) => `
+                                    <div class="form-check">
+                                        <input class="form-check-input tiff-year-chk" type="radio" name="tiffYearRadio" value="${idx}" id="tiffYear_${y}" ${idx === 3 ? 'checked' : ''}>
+                                        <label class="form-check-label" for="tiffYear_${y}">
+                                            ${statsData[y].label}
+                                        </label>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
             return this._div;
         };
+
+        // ฟังก์ชันย่อ/ขยายกล่องขวา
+        let isRightCollapsed = false;
+        function toggleRightPanel() {
+            isRightCollapsed = !isRightCollapsed;
+            const content = document.getElementById('rightPanelContent');
+            const btn = document.getElementById('toggleRightBtn');
+            if (isRightCollapsed) {
+                content.style.display = 'none';
+                btn.innerHTML = '➕ ขยายส่วน';
+            } else {
+                content.style.display = 'block';
+                btn.innerHTML = '➖ ย่อส่วน';
+            }
+        }
 
         info.update = function (props) {
             const hoverEl = document.getElementById('hoverDistrictInfo');
@@ -583,9 +652,9 @@
                 'พื้นที่รวม ' + areaVal.toFixed(2) + ' ตร.กม.'
                 : 'นำเมาส์ไปชี้ที่พื้นที่ศึกษา');
         };
+
         info.addTo(map);
 
-        // 9. โหลดขอบเขต Shapefile (GeoJSON) ทั้ง 3 อำเภอจาก Supabase
         const files = [
             { url: 'https://urbioihiapdgckfetbfe.supabase.co/storage/v1/object/public/tablan/Kornburi_JSON.geojson', name: 'ครบุรี' },
             { url: 'https://urbioihiapdgckfetbfe.supabase.co/storage/v1/object/public/tablan/SuengSang_JSON.geojson', name: 'เสิงสาง' },
@@ -628,7 +697,7 @@
                         });
                     }
                     districtTotalAreas[item.name] = totalArea;
-                    districtGeoJsonData[item.name] = data; // เก็บข้อมูล GeoJSON ไว้สร้าง SVG ClipPath
+                    districtGeoJsonData[item.name] = data;
 
                     const layer = L.geoJson(data, {
                         style: style,
@@ -641,9 +710,7 @@
             updateSvgClipPath();
         });
 
-        // 10. ผูก Event การกดเปิด-ปิดสวิตช์ Shapefile, TIFF และโหมด Clip Landuse
         document.addEventListener('change', function (e) {
-            // เปิด-ปิด Shapefile ทั้งหมดพร้อมกัน
             if (e.target && e.target.id === 'toggleAllShp') {
                 const isChecked = e.target.checked;
                 document.querySelectorAll('.dist-chk').forEach(chk => {
@@ -660,7 +727,6 @@
                 updateSvgClipPath();
             }
 
-            // เปิด-ปิด Shapefile แยกรายอำเภอ
             if (e.target && e.target.classList.contains('dist-chk')) {
                 const distName = e.target.value;
                 const isChecked = e.target.checked;
@@ -676,31 +742,41 @@
                 updateSvgClipPath();
             }
 
-            // เปิด-ปิด แผนที่คาดการณ์ TIFF
             if (e.target && e.target.id === 'toggleTiffLayer') {
                 isTiffVisible = e.target.checked;
-                if (currentTiffLayer) {
-                    if (isTiffVisible) {
-                        currentTiffLayer.addTo(map);
-                        updateSvgClipPath();
-                    } else {
-                        map.removeLayer(currentTiffLayer);
-                    }
+                tiffLayerGroup.clearLayers();
+                if (isTiffVisible && currentTiffLayer) {
+                    tiffLayerGroup.addLayer(currentTiffLayer);
+                    updateSvgClipPath();
                 }
             }
 
-            // เปิด-ปิด โหมดตัดเฉพาะในเขตอุทยาน (Clip Landuse)
+            if (e.target && e.target.classList.contains('tiff-year-chk')) {
+                const selectedIdx = parseInt(e.target.value);
+                if (!isNaN(selectedIdx)) {
+                    if (isPlaying) togglePlay();
+                    currentIndex = selectedIdx;
+                    slider.value = currentIndex;
+
+                    const toggleTiffEl = document.getElementById('toggleTiffLayer');
+                    if (toggleTiffEl && !toggleTiffEl.checked) {
+                        toggleTiffEl.checked = true;
+                        isTiffVisible = true;
+                    }
+                    loadYearData(currentIndex);
+                }
+            }
+
             if (e.target && e.target.id === 'toggleClipLanduse') {
                 isClipByPark = e.target.checked;
                 updateSvgClipPath();
                 const year = yearsList[currentIndex];
-                const fileName = statsData[year].file;
-                const clipBadge = isClipByPark ? ' <span class="badge bg-info text-dark">Clip เขตอุทยาน</span>' : '';
-                document.getElementById('loadingStatus').innerHTML = `<span class="text-success">✅ แสดงผล <b>${fileName}</b>${clipBadge}</span>`;
+                if (georasterCache[year]) {
+                    displayGeoraster(georasterCache[year], statsData[year].file, year);
+                }
             }
         });
 
-        // โหลดข้อมูลปีเริ่มต้น (2031) ทันทีเมื่อเปิดหน้าเว็บ
         loadYearData(currentIndex);
     </script>
 </body>

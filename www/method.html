@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>วิธีการศึกษา - ระบบคาดการณ์การใช้ประโยชน์ที่ดิน</title>
+    <title>Methodology</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -101,7 +101,7 @@
     <!-- ================= NAVBAR ================= -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="index.html">GeoPrediction</a>
+            <a class="navbar-brand fw-bold" href="index.html">Tanlab 888</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -111,6 +111,7 @@
                     <li class="nav-item"><a class="nav-link" href="background.html">ที่มาและความสำคัญ</a></li>
                     <li class="nav-item"><a class="nav-link" href="area.html">ขอบเขตพื้นที่</a></li>
                     <li class="nav-item"><a class="nav-link active" href="method.html">วิธีการศึกษา</a></li>
+                    <li class="nav-item"><a class="nav-link" href="gallery.html">แกลเลอรีแผนที่</a></li>
                     <li class="nav-item"><a class="nav-link" href="conclusion.html">สรุปผล</a></li>
                 </ul>
             </div>
@@ -140,9 +141,11 @@
             <ul class="mb-0">
                 <li>นำเข้าข้อมูลการใช้ประโยชน์ที่ดิน (Land Use) ช่วงปี ค.ศ. 2015 และ 2023 ของทั้ง 3 อำเภอ ได้แก่
                     <code>LU_อ.วังน้ำเขียว 15/23</code>, <code>LU_อ.ครบุรี 15/23</code> และ
-                    <code>LU_อ.เสิงสาง 15/23</code></li>
+                    <code>LU_อ.เสิงสาง 15/23</code>
+                </li>
                 <li>นำชั้นข้อมูลทั้ง 3 อำเภอมาผสานรวมกันด้วยคำสั่ง <b>Merge</b> เพื่อให้ได้ชั้นข้อมูลรวมของพื้นที่ศึกษา
-                    <code>LU_รวมอช.ทับลาน 15/23</code></li>
+                    <code>LU_รวมอช.ทับลาน 15/23</code>
+                </li>
                 <li>แปลงข้อมูลเวกเตอร์ให้เป็นข้อมูลแรสเตอร์ด้วยเครื่องมือ <b>Rasterize</b>
                     ได้ผลลัพธ์เป็นชั้นข้อมูลแรสเตอร์ <code>LU_รวมอช.ทับลาน 15/23</code>
                     สำหรับใช้เป็นข้อมูลตั้งต้นในแบบจำลอง</li>
@@ -186,7 +189,8 @@
                 <li>นำข้อมูลตั้งต้น <code>LU_รวมอช.ทับลาน 15/23</code> ร่วมกับตัวแปรขับเคลื่อนเชิงพื้นที่ทั้ง 5 ปัจจัย
                     (<code>Dis_Urban</code>, <code>Dis_Agri</code>, <code>Dis_Water</code>, <code>Dis_Road</code> และ
                     <code>Slope_DEM</code>) เข้าสู่ปลั๊กอิน <b>MOLUSCE</b> (Modules for Land Use Change Simulations)
-                    ในโปรแกรม QGIS</li>
+                    ในโปรแกรม QGIS
+                </li>
                 <li>ประมวลผลเมทริกซ์การเปลี่ยนแปลงและจำลองการคาดการณ์ล่วงหน้า
                     ได้ผลลัพธ์เป็นแผนที่คาดการณ์การใช้ประโยชน์ที่ดินตามช่วงปี (<b>Prediction Map</b>)</li>
                 <li>นำแผนที่คาดการณ์ที่ได้มาสรุปค่าพิกเซลรายคลาสด้วยเครื่องมือ <b>Raster Layer Unique Values</b>
