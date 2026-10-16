@@ -122,6 +122,43 @@
             font-weight: 700;
             font-size: 16px;
         }
+
+        /* สไตล์สำหรับหน้าต่างซูมภาพ (Modal Zoom Viewer) */
+        .zoom-viewport {
+            width: 100%;
+            height: 65vh;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #1a1a1a;
+            cursor: grab;
+        }
+
+        .zoom-viewport:active {
+            cursor: grabbing;
+        }
+
+        #zoomModalImage {
+            max-width: 100%;
+            max-height: 100%;
+            transition: transform 0.15s ease-out;
+            transform-origin: center center;
+            user-select: none;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            bottom: 15px;
+            background: rgba(0, 0, 0, 0.75);
+            padding: 8px 15px;
+            border-radius: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+            backdrop-filter: blur(5px);
+        }
     </style>
 </head>
 
@@ -151,7 +188,7 @@
         <div class="container">
             <h1 class="fw-bold mb-2">แกลเลอรีและระบบเล่นวิดีโอจำลอง (Time-lapse)</h1>
             <p class="lead mb-0">รับชมการเปลี่ยนแปลงการใช้ประโยชน์ที่ดินผ่านระบบเล่นภาพอัตโนมัติ
-                พร้อมปรับความเร็วได้ตามต้องการ</p>
+                พร้อมปรับความเร็วได้ตามต้องการ หรือคลิกที่รูปภาพเพื่อขยายซูมดูรายละเอียด</p>
         </div>
     </div>
 
@@ -207,7 +244,7 @@
                 galleryData.forEach((item, idx) => {
                     document.write(`
                         <div class="col-md-4">
-                            <div class="map-card" onclick="jumpToMovie(${idx})">
+                            <div class="map-card" onclick="openZoomModal('${item.file}', '${item.year}', '${item.desc}')">
                                 <img src="${item.file}" class="card-img-top" alt="${item.year}">
                                 <div class="card-body">
                                     <h5 class="card-title">${item.year}</h5>
@@ -218,6 +255,35 @@
                     `);
                 });
             </script>
+        </div>
+    </div>
+
+    <!-- ================= MODAL ZOOM VIEWER ================= -->
+    <div class="modal fade" id="zoomModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold text-success" id="zoomModalTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0 bg-dark position-relative">
+                    <div class="zoom-viewport" id="zoomViewport">
+                        <img id="zoomModalImage" src="" alt="Zoomable Map">
+                        <div class="zoom-controls shadow">
+                            <button class="btn btn-light btn-sm fw-bold" onclick="zoomIn()" title="ซูมเข้า">➕
+                                ซูมเข้า</button>
+                            <button class="btn btn-light btn-sm fw-bold" onclick="zoomOut()" title="ซูมออก">➖
+                                ซูมออก</button>
+                            <button class="btn btn-secondary btn-sm" onclick="resetZoom()" title="รีเซ็ต">🔄
+                                รีเซ็ต</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <p class="text-muted small mb-0" id="zoomModalDesc"></p>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">ปิดหน้าต่าง</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -274,17 +340,16 @@
 
         function updateSpeed(val) {
             let seconds = parseFloat(val);
-            if (isNaN(seconds) || seconds < 0.2) seconds = 0.5; // ป้องกันค่าต่ำเกินไป
-            playSpeed = seconds * 1000; // แปลงวินาทีเป็นมิลลิวินาที
+            if (isNaN(seconds) || seconds < 0.2) seconds = 0.5;
+            playSpeed = seconds * 1000;
 
-            // ถ้ากำลังเล่นอยู่ ให้รีสตาร์ทตัวนับเวลาด้วยความเร็วใหม่ทันที
             if (isMoviePlaying) {
                 restartMovieInterval();
             }
         }
 
         function slideMovie(val) {
-            if (isMoviePlaying) toggleMovie(); // หยุดชั่วคราวเมื่อผู้ใช้ลากแถบเวลาเอง
+            if (isMoviePlaying) toggleMovie();
             updateMoviePlayer(val);
         }
 
@@ -293,6 +358,86 @@
             updateMoviePlayer(idx);
             window.scrollTo({ top: 150, behavior: 'smooth' });
         }
+
+        // ================= ฟังก์ชันสำหรับระบบซูมภาพใน Modal =================
+        let scale = 1;
+        let panning = false;
+        let pointX = 0;
+        let pointY = 0;
+        let startX = 0;
+        let startY = 0;
+
+        const zoomImg = document.getElementById('zoomModalImage');
+        const zoomViewport = document.getElementById('zoomViewport');
+
+        function openZoomModal(file, year, desc) {
+            zoomImg.src = file;
+            document.getElementById('zoomModalTitle').innerText = "แผนที่การใช้ประโยชน์ที่ดิน: " + year;
+            document.getElementById('zoomModalDesc').innerText = desc;
+
+            resetZoom();
+
+            var myModal = new bootstrap.Modal(document.getElementById('zoomModal'));
+            myModal.show();
+        }
+
+        function setTransform() {
+            zoomImg.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+        }
+
+        function zoomIn() {
+            scale = Math.min(scale + 0.5, 4); // ซูมได้สูงสุด 4 เท่า
+            setTransform();
+        }
+
+        function zoomOut() {
+            scale = Math.max(scale - 0.5, 1); // ซูมออกต่ำสุดเท่าขนาดเดิม
+            if (scale === 1) {
+                pointX = 0;
+                pointY = 0;
+            }
+            setTransform();
+        }
+
+        function resetZoom() {
+            scale = 1;
+            pointX = 0;
+            pointY = 0;
+            setTransform();
+        }
+
+        // รองรับการคลิกลากภาพ (Pan) เมื่อซูมภาพเข้ามาใกล้ๆ
+        zoomViewport.addEventListener('mousedown', (e) => {
+            if (scale > 1) {
+                panning = true;
+                startX = e.clientX - pointX;
+                startY = e.clientY - pointY;
+                zoomViewport.style.cursor = 'grabbing';
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            panning = false;
+            zoomViewport.style.cursor = 'grab';
+        });
+
+        zoomViewport.addEventListener('mousemove', (e) => {
+            if (!panning) return;
+            e.preventDefault();
+            pointX = e.clientX - startX;
+            pointY = e.clientY - startY;
+            setTransform();
+        });
+
+        // รองรับการใช้ล้อเลื่อนเมาส์ (Mouse Wheel Scroll) ซูมเข้า-ออก
+        zoomViewport.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+                zoomIn();
+            } else {
+                zoomOut();
+            }
+        });
     </script>
 </body>
 
